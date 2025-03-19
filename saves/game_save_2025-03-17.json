@@ -1,0 +1,56 @@
+{
+  "game_id": "game_1742194229",
+  "system": "dnd5e",
+  "current_location": "Forest Clearing",
+  "active_characters": {},
+  "active_npcs": [],
+  "active_quests": {},
+  "discovered_locations": [
+    "Forest Clearing"
+  ],
+  "game_time": {
+    "day": 1,
+    "hour": 8,
+    "minute": 0
+  },
+  "environment": {
+    "weather": "clear skies",
+    "time_of_day": "morning",
+    "season": "summer",
+    "lighting": "natural daylight",
+    "temperature": "warm",
+    "ambient_noise": "typical for setting"
+  },
+  "event_history": [
+    {
+      "type": "location_change",
+      "data": {
+        "previous_location": "Forest Clearing",
+        "new_location": "Forest Clearing"
+      },
+      "game_time": {
+        "day": 1,
+        "hour": 8,
+        "minute": 0
+      },
+      "real_time": 1742194229.818525,
+      "location": "Forest Clearing"
+    },
+    {
+      "type": "game_start",
+      "data": {
+        "session_number": 1
+      },
+      "game_time": {
+        "day": 1,
+        "hour": 8,
+        "minute": 0
+      },
+      "real_time": 1742194229.8185933,
+      "location": "Forest Clearing"
+    }
+  ],
+  "game_mode": "exploration",
+  "session_start_time": 1742194229.8184655,
+  "session_number": 1
+}
