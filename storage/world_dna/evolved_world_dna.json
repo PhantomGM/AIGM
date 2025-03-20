@@ -1,0 +1,22 @@
+{
+  "dna_string": "0104000001",
+  "traits": {
+    "terrain": "forests",
+    "climate": "arctic",
+    "resources": "abundant",
+    "hazards": "safe",
+    "government": "democracy",
+    "stability": "stable",
+    "factions": "united",
+    "tech_level": "primitive",
+    "magic": "abundant",
+    "supernatural": "integral",
+    "conflict": "peace",
+    "threats": "monsters",
+    "danger_level": "safe",
+    "culture_type": "unified",
+    "values": "honor",
+    "openness": "xenophobic",
+    "special_features": "ancient_ruins"
+  }
+}

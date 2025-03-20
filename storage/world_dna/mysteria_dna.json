@@ -1,0 +1,21 @@
+{
+  "dna_string": "05000206020003040105060401060400",
+  "traits": {
+    "terrain": "coastal",
+    "climate": "tropical",
+    "resources": "scarce",
+    "government": "feudal",
+    "stability": "recovering",
+    "factions": "united",
+    "tech_level": "industrial",
+    "magic": "forgotten",
+    "supernatural": "common",
+    "conflict": "ancient_grudges",
+    "threats": "minimal",
+    "danger_level": "apocalyptic",
+    "culture_type": "diverse",
+    "values": "power",
+    "openness": "integrated",
+    "special_features": "ancient_ruins"
+  }
+}

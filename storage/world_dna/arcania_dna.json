@@ -1,0 +1,22 @@
+{
+  "dna_string": "0505010202",
+  "traits": {
+    "terrain": "coastal",
+    "climate": "varied",
+    "resources": "balanced",
+    "hazards": "deadly",
+    "government": "oligarchy",
+    "stability": "stable",
+    "factions": "united",
+    "tech_level": "primitive",
+    "magic": "abundant",
+    "supernatural": "integral",
+    "conflict": "peace",
+    "threats": "monsters",
+    "danger_level": "safe",
+    "culture_type": "unified",
+    "values": "honor",
+    "openness": "xenophobic",
+    "special_features": "ancient_ruins"
+  }
+}

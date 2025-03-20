@@ -73,9 +73,9 @@ class BaseAgent(ABC):
         self.system_prompt = prompt
         logger.info(f"Set system prompt for {self.agent_name}")
     
-    def _generate_llm_response(self, prompt: str, system_prompt: Optional[str] = None) -> str:
+    async def _generate_llm_response(self, prompt: str, system_prompt: Optional[str] = None) -> str:
         """
-        Generate a response using a language model.
+        Generate a response using a language model asynchronously.
         
         Args:
             prompt: The prompt to send to the language model.
@@ -89,7 +89,8 @@ class BaseAgent(ABC):
         logger.info(f"LLM call from {self.agent_name}: {prompt[:50]}...")
         
         # In a real implementation, this would be replaced with actual LLM API calls
-        return f"[LLM Response from {self.agent_name}]: This is a placeholder response for '{prompt[:30]}...'"
+        response = f"[LLM Response from {self.agent_name}]: This is a placeholder response for '{prompt[:30]}...'"
+        return response
     
     def _format_context(self, context: Dict[str, Any]) -> str:
         """
