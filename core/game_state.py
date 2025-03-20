@@ -9,6 +9,11 @@ import logging
 import time
 from typing import Dict, List, Any, Optional, Set, Tuple, Union
 import json
+from pathlib import Path
+import os
+
+# Import the system manager
+from core.system_manager import SystemManager
 
 # Set up logging
 logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(name)s - %(levelname)s - %(message)s')
@@ -23,16 +28,26 @@ class GameState:
     methods to update and query this state and maintains a history of significant events.
     """
     
-    def __init__(self, game_id: str = None, system: str = "dnd5e"):
+    def __init__(self, game_id: str = None, system_id: str = "dnd5e"):
         """
         Initialize a new game state.
         
         Args:
             game_id: Unique identifier for this game session.
-            system: The game system being used (e.g., "dnd5e", "pathfinder").
+            system_id: The game system being used (e.g., "dnd5e", "pathfinder2e").
         """
         self.game_id = game_id or f"game_{int(time.time())}"
-        self.system = system
+        
+        # Initialize the system manager and select the system
+        self.system_manager = SystemManager()
+        self.system_id = system_id
+        self.system_manager.select_system(system_id)
+        self.system = self.system_manager.get_active_system()
+        
+        if not self.system:
+            logger.warning(f"Game system '{system_id}' not found. Using default rules.")
+        else:
+            logger.info(f"Using game system: {self.system.name} (v{self.system.version})")
         
         # Basic game state
         self.current_location = ""
@@ -66,7 +81,69 @@ class GameState:
         self.session_start_time = time.time()
         self.session_number = 1
         
+        # Session history for summaries and recall
+        self.session_summaries = []
+        
+        # Knowledge base management
+        self.knowledge_base = {
+            "npcs": {},         # NPC information
+            "locations": {},    # Location descriptions
+            "items": {},        # Notable items and artifacts
+            "factions": {},     # Organizations and factions
+            "lore": {},         # World lore and history
+            "quests": {},       # Additional quest details
+            "player_notes": {}, # Optional player-added notes
+            "custom": {}        # Custom knowledge entries
+        }
+        
+        # Multimodal settings
+        self.multimodal_settings = {
+            "text_to_speech": False,
+            "speech_to_text": False,
+            "image_generation": False
+        }
+        
         logger.info(f"Initialized new game state with ID {self.game_id}")
+    
+    def change_system(self, system_id: str) -> bool:
+        """
+        Change the game system being used.
+        
+        Args:
+            system_id: The ID of the new system to use
+            
+        Returns:
+            True if the system was changed successfully, False otherwise
+        """
+        if self.system_manager.select_system(system_id):
+            self.system_id = system_id
+            self.system = self.system_manager.get_active_system()
+            logger.info(f"Changed game system to: {self.system.name} (v{self.system.version})")
+            
+            # Add a game event for the system change
+            self.add_event("system_change", {
+                "previous_system": self.system_id,
+                "new_system": system_id
+            })
+            
+            return True
+        else:
+            logger.warning(f"Failed to change game system to '{system_id}'")
+            return False
+    
+    def get_rule(self, rule_id: str) -> Optional[Dict[str, Any]]:
+        """
+        Get a specific rule from the current game system.
+        
+        Args:
+            rule_id: Identifier for the rule
+            
+        Returns:
+            Rule data if found, None otherwise
+        """
+        if self.system:
+            return self.system.get_rule(rule_id)
+        return None
     
     def update_location(self, location_name: str) -> None:
         """
@@ -75,12 +152,13 @@ class GameState:
         Args:
             location_name: The name of the new location.
         """
+        previous_location = self.current_location
         self.current_location = location_name
         self.discovered_locations.add(location_name)
         
         # Record this as an event
         self.add_event("location_change", {
-            "previous_location": self.current_location,
+            "previous_location": previous_location,
             "new_location": location_name
         })
         
@@ -292,85 +370,407 @@ class GameState:
         return f"It is {self.environment['time_of_day']} on a {self.environment['weather']} {self.environment['season']} day. " \
                f"The temperature is {self.environment['temperature']} and the lighting is {self.environment['lighting']}."
     
-    def save_to_file(self, filepath: str) -> bool:
+    def add_session_summary(self, summary: Dict[str, Any]) -> None:
+        """
+        Add a summary of the current session.
+        
+        Args:
+            summary: Dictionary containing session summary information.
+                    Should include at least "title" and "content" keys.
+        """
+        # Add timestamp and session number
+        summary["timestamp"] = time.time()
+        summary["session_number"] = self.session_number
+        
+        # Add the current state information
+        summary["location"] = self.current_location
+        summary["characters"] = list(self.active_characters.keys())
+        summary["npcs"] = list(self.active_npcs)
+        summary["game_time"] = self.get_game_time_string()
+        
+        # Generate a unique ID for the summary if not provided
+        if "id" not in summary:
+            summary["id"] = f"summary_{int(time.time())}"
+        
+        self.session_summaries.append(summary)
+        logger.info(f"Added summary for session {self.session_number}")
+        
+        # Create a directory for session summaries if it doesn't exist
+        summaries_dir = Path(f"game_data/{self.game_id}/session_summaries")
+        summaries_dir.mkdir(parents=True, exist_ok=True)
+        
+        # Save the summary to a file
+        summary_path = summaries_dir / f"session_{self.session_number}_{summary['id']}.json"
+        with open(summary_path, 'w', encoding='utf-8') as f:
+            json.dump(summary, f, indent=2)
+        
+        logger.info(f"Saved session summary to {summary_path}")
+    
+    def get_session_summaries(self, count: int = None) -> List[Dict[str, Any]]:
+        """
+        Get session summaries.
+        
+        Args:
+            count: Number of most recent summaries to retrieve. If None, returns all.
+            
+        Returns:
+            List of session summaries, newest first.
+        """
+        if count is None:
+            return list(reversed(self.session_summaries))
+        else:
+            return list(reversed(self.session_summaries))[:count]
+    
+    def generate_session_summary(self) -> Dict[str, Any]:
+        """
+        Generate a basic session summary based on current game state and recent events.
+        
+        Returns:
+            A dictionary containing the auto-generated session summary.
+        """
+        # Get the recent events for the summary
+        recent_events = self.get_recent_events(count=10)
+        
+        # Build a title based on location and major events
+        title = f"Session {self.session_number}: Adventures in {self.current_location}"
+        
+        # Create a basic content summary from recent events
+        content_parts = [
+            f"Session {self.session_number} Summary",
+            f"Game Time: {self.get_game_time_string()}",
+            f"Location: {self.current_location}",
+            "\nKey Events:"
+        ]
+        
+        # Add bullet points for each event
+        for event in recent_events:
+            event_time = f"Day {event['game_time']['day']}, {event['game_time']['hour']}:{event['game_time']['minute']:02d}"
+            event_type = event['type'].replace('_', ' ').title()
+            
+            # Format the event description based on event type
+            if event['type'] == 'location_change':
+                desc = f"Party traveled from {event['data']['previous_location']} to {event['data']['new_location']}"
+            elif event['type'] == 'combat_start':
+                desc = f"Combat began against {event['data'].get('enemies', 'unknown foes')}"
+            elif event['type'] == 'combat_end':
+                desc = f"Combat ended with outcome: {event['data'].get('outcome', 'unknown')}"
+            else:
+                # Generic event description
+                desc = f"{event_type} event occurred"
+                
+            content_parts.append(f"- {event_time}: {desc}")
+        
+        # Add active characters and NPCs
+        content_parts.append("\nActive Characters:")
+        for char_id, char_data in self.active_characters.items():
+            char_name = char_data.get('name', char_id)
+            content_parts.append(f"- {char_name}")
+        
+        content_parts.append("\nActive NPCs:")
+        for npc in self.active_npcs:
+            content_parts.append(f"- {npc}")
+        
+        # Combine all parts into content
+        content = "\n".join(content_parts)
+        
+        return {
+            "title": title,
+            "content": content,
+            "auto_generated": True,
+            "id": f"auto_summary_{int(time.time())}"
+        }
+    
+    def add_knowledge_entry(self, category: str, key: str, data: Dict[str, Any]) -> bool:
+        """
+        Add or update an entry in the knowledge base.
+        
+        Args:
+            category: The category of knowledge (npcs, locations, items, etc.)
+            key: Unique identifier for this entry within the category
+            data: The data to store
+            
+        Returns:
+            True if the entry was added successfully, False otherwise
+        """
+        if category not in self.knowledge_base:
+            logger.warning(f"Invalid knowledge category: {category}")
+            return False
+        
+        # Add metadata
+        data["last_updated"] = time.time()
+        if "first_added" not in data:
+            data["first_added"] = time.time()
+        
+        # Add to knowledge base
+        self.knowledge_base[category][key] = data
+        logger.info(f"Added knowledge entry: {category}/{key}")
+        
+        # Automatically save the knowledge base
+        self._save_knowledge_base()
+        
+        return True
+    
+    def get_knowledge_entry(self, category: str, key: str) -> Optional[Dict[str, Any]]:
+        """
+        Retrieve an entry from the knowledge base.
+        
+        Args:
+            category: The category of knowledge
+            key: The entry key
+            
+        Returns:
+            The knowledge entry if found, None otherwise
+        """
+        if category not in self.knowledge_base:
+            logger.warning(f"Invalid knowledge category: {category}")
+            return None
+        
+        return self.knowledge_base[category].get(key)
+    
+    def search_knowledge_base(self, query: str, category: Optional[str] = None) -> List[Dict[str, Any]]:
+        """
+        Search the knowledge base for entries matching the query.
+        
+        Args:
+            query: The search query string
+            category: Optional category to limit the search
+            
+        Returns:
+            List of matching knowledge entries with category and key information
+        """
+        results = []
+        query = query.lower()
+        
+        categories = [category] if category else self.knowledge_base.keys()
+        
+        for cat in categories:
+            if cat not in self.knowledge_base:
+                continue
+                
+            for key, entry in self.knowledge_base[cat].items():
+                # Check for match in key
+                if query in key.lower():
+                    results.append({
+                        "category": cat,
+                        "key": key,
+                        "data": entry,
+                        "match_type": "key"
+                    })
+                    continue
+                
+                # Check for match in name field if it exists
+                if "name" in entry and query in entry["name"].lower():
+                    results.append({
+                        "category": cat,
+                        "key": key,
+                        "data": entry,
+                        "match_type": "name"
+                    })
+                    continue
+                
+                # Check for match in description if it exists
+                if "description" in entry and query in entry["description"].lower():
+                    results.append({
+                        "category": cat,
+                        "key": key,
+                        "data": entry,
+                        "match_type": "description"
+                    })
+                    continue
+        
+        return results
+    
+    def _save_knowledge_base(self) -> bool:
+        """
+        Save the knowledge base to disk.
+        
+        Returns:
+            True if saved successfully, False otherwise
+        """
+        try:
+            # Create directories if they don't exist
+            kb_dir = Path(f"game_data/{self.game_id}/knowledge_base")
+            kb_dir.mkdir(parents=True, exist_ok=True)
+            
+            # Save each category to a separate file
+            for category, entries in self.knowledge_base.items():
+                if entries:  # Only save non-empty categories
+                    file_path = kb_dir / f"{category}.json"
+                    with open(file_path, 'w', encoding='utf-8') as f:
+                        json.dump(entries, f, indent=2)
+            
+            logger.info("Saved knowledge base to disk")
+            return True
+        
+        except Exception as e:
+            logger.error(f"Error saving knowledge base: {e}")
+            return False
+    
+    def _load_knowledge_base(self) -> bool:
+        """
+        Load the knowledge base from disk.
+        
+        Returns:
+            True if loaded successfully, False otherwise
+        """
+        try:
+            # Check if knowledge base directory exists
+            kb_dir = Path(f"game_data/{self.game_id}/knowledge_base")
+            if not kb_dir.exists():
+                logger.info(f"No knowledge base found for game {self.game_id}")
+                return False
+            
+            # Load each category from its file
+            for category in self.knowledge_base.keys():
+                file_path = kb_dir / f"{category}.json"
+                if file_path.exists():
+                    with open(file_path, 'r', encoding='utf-8') as f:
+                        self.knowledge_base[category] = json.load(f)
+            
+            logger.info("Loaded knowledge base from disk")
+            return True
+        
+        except Exception as e:
+            logger.error(f"Error loading knowledge base: {e}")
+            return False
+    
+    def update_multimodal_settings(self, settings: Dict[str, bool]) -> None:
+        """
+        Update multimodal interaction settings.
+        
+        Args:
+            settings: Dictionary of settings to update
+        """
+        for key, value in settings.items():
+            if key in self.multimodal_settings:
+                self.multimodal_settings[key] = value
+                logger.info(f"Updated multimodal setting {key}: {value}")
+    
+    def to_context_dict(self) -> Dict[str, Any]:
+        """
+        Convert the game state to a dictionary for use in AI context.
+        
+        Returns:
+            Dictionary representation of the game state.
+        """
+        context = {
+            "game_id": self.game_id,
+            "system": {
+                "id": self.system_id,
+                "name": self.system.name if self.system else self.system_id,
+                "version": self.system.version if self.system else "unknown"
+            },
+            "current_location": self.current_location,
+            "game_time": self.game_time,
+            "environment": self.environment,
+            "game_mode": self.game_mode,
+            "session_number": self.session_number,
+            "active_characters": self.active_characters,
+            "active_npcs": list(self.active_npcs),
+            "active_quests": self.active_quests,
+            "discovered_locations": list(self.discovered_locations),
+            "recent_events": self.get_recent_events(count=5),
+            "multimodal_settings": self.multimodal_settings
+        }
+        
+        # Include the most recent session summary if available
+        if self.session_summaries:
+            context["latest_summary"] = self.session_summaries[-1]
+        
+        return context
+    
+    def save_to_file(self, file_path: Optional[str] = None) -> str:
         """
         Save the game state to a file.
         
         Args:
-            filepath: Path to the file to save.
+            file_path: Path to save the game state. If None, a default path is used.
             
         Returns:
-            True if successful, False otherwise.
+            Path to the saved file.
         """
-        try:
-            # Convert sets to lists for JSON serialization
-            state_dict = self.__dict__.copy()
-            state_dict["active_npcs"] = list(self.active_npcs)
-            state_dict["discovered_locations"] = list(self.discovered_locations)
+        if file_path is None:
+            # Create a default path using the game ID
+            saves_dir = Path("saves")
+            saves_dir.mkdir(exist_ok=True)
             
-            with open(filepath, 'w') as f:
-                json.dump(state_dict, f, indent=2)
-            
-            logger.info(f"Saved game state to {filepath}")
-            return True
-        except Exception as e:
-            logger.error(f"Error saving game state to {filepath}: {e}")
-            return False
-    
-    @classmethod
-    def load_from_file(cls, filepath: str) -> 'GameState':
-        """
-        Load a game state from a file.
+            file_path = str(saves_dir / f"{self.game_id}.json")
         
-        Args:
-            filepath: Path to the file to load.
-            
-        Returns:
-            A new GameState instance with the loaded state.
-        """
-        try:
-            with open(filepath, 'r') as f:
-                state_dict = json.load(f)
-            
-            # Create a new instance
-            game_state = cls(game_id=state_dict.get("game_id"), system=state_dict.get("system"))
-            
-            # Update attributes from the loaded state
-            game_state.current_location = state_dict.get("current_location", "")
-            game_state.active_characters = state_dict.get("active_characters", {})
-            game_state.active_npcs = set(state_dict.get("active_npcs", []))
-            game_state.active_quests = state_dict.get("active_quests", {})
-            game_state.discovered_locations = set(state_dict.get("discovered_locations", []))
-            game_state.game_time = state_dict.get("game_time", {"day": 1, "hour": 8, "minute": 0})
-            game_state.environment = state_dict.get("environment", {})
-            game_state.event_history = state_dict.get("event_history", [])
-            game_state.game_mode = state_dict.get("game_mode", "exploration")
-            game_state.session_number = state_dict.get("session_number", 1)
-            
-            logger.info(f"Loaded game state from {filepath}")
-            return game_state
-        except Exception as e:
-            logger.error(f"Error loading game state from {filepath}: {e}")
-            return cls()  # Return a new default instance
-    
-    def to_context_dict(self) -> Dict[str, Any]:
-        """
-        Convert the game state to a dictionary suitable for providing as context to agents.
-        
-        Returns:
-            A dictionary with key game state information.
-        """
-        # Create a simplified version of the game state for context
-        context = {
+        # Convert the game state to a serializable dictionary
+        state_dict = {
+            "game_id": self.game_id,
+            "system_id": self.system_id,
             "current_location": self.current_location,
             "active_characters": self.active_characters,
             "active_npcs": list(self.active_npcs),
-            "game_time": self.get_game_time_string(),
+            "active_quests": self.active_quests,
+            "discovered_locations": list(self.discovered_locations),
+            "game_time": self.game_time,
             "environment": self.environment,
+            "event_history": self.event_history,
             "game_mode": self.game_mode,
+            "session_number": self.session_number,
+            "session_start_time": self.session_start_time,
+            "session_summaries": self.session_summaries,
+            "multimodal_settings": self.multimodal_settings
         }
         
-        # Add recent events (last 3)
-        context["recent_events"] = self.get_recent_events(count=3)
+        # Save to file
+        with open(file_path, 'w', encoding='utf-8') as f:
+            json.dump(state_dict, f, indent=2)
         
-        return context
+        logger.info(f"Saved game state to {file_path}")
+        
+        # Also save the knowledge base
+        self._save_knowledge_base()
+        
+        return file_path
+    
+    def load_from_file(self, file_path: str) -> bool:
+        """
+        Load the game state from a file.
+        
+        Args:
+            file_path: Path to the saved game state file.
+            
+        Returns:
+            True if the game state was loaded successfully, False otherwise.
+        """
+        try:
+            with open(file_path, 'r', encoding='utf-8') as f:
+                state_dict = json.load(f)
+            
+            # Load basic properties
+            self.game_id = state_dict["game_id"]
+            
+            # Load system
+            system_id = state_dict.get("system_id", "dnd5e")
+            self.change_system(system_id)
+            
+            self.current_location = state_dict["current_location"]
+            self.active_characters = state_dict["active_characters"]
+            self.active_npcs = set(state_dict["active_npcs"])
+            self.active_quests = state_dict["active_quests"]
+            self.discovered_locations = set(state_dict["discovered_locations"])
+            self.game_time = state_dict["game_time"]
+            self.environment = state_dict["environment"]
+            self.event_history = state_dict["event_history"]
+            self.game_mode = state_dict["game_mode"]
+            self.session_number = state_dict["session_number"]
+            self.session_start_time = state_dict["session_start_time"]
+            
+            # Load session summaries if available
+            self.session_summaries = state_dict.get("session_summaries", [])
+            
+            # Load multimodal settings if available
+            self.multimodal_settings.update(state_dict.get("multimodal_settings", {}))
+            
+            # Load knowledge base
+            self._load_knowledge_base()
+            
+            logger.info(f"Loaded game state from {file_path}")
+            return True
+        
+        except Exception as e:
+            logger.error(f"Error loading game state: {e}")
+            return False

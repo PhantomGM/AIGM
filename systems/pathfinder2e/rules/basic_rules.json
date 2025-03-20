@@ -1,0 +1,104 @@
+{
+  "name": "Pathfinder 2e Basic Rules",
+  "version": "1.0",
+  "sections": [
+    {
+      "id": "ability_scores",
+      "name": "Ability Scores",
+      "content": "Every character has six ability scores that represent their basic attributes: Strength, Dexterity, Constitution, Intelligence, Wisdom, and Charisma. These scores typically range from 8 to 18 for starting characters. Each ability score has a modifier ranging from -1 to +4 for most starting characters.",
+      "subsections": [
+        {
+          "id": "strength",
+          "name": "Strength",
+          "content": "Strength measures physical power and affects melee attack rolls, damage rolls with melee weapons, athletics checks, and carrying capacity."
+        },
+        {
+          "id": "dexterity",
+          "name": "Dexterity",
+          "content": "Dexterity measures agility and affects armor class, reflex saves, ranged attack rolls, and acrobatics checks."
+        },
+        {
+          "id": "constitution",
+          "name": "Constitution",
+          "content": "Constitution measures endurance and affects hit points, fortitude saves, and recovery from certain conditions."
+        },
+        {
+          "id": "intelligence",
+          "name": "Intelligence",
+          "content": "Intelligence measures reasoning and memory, affecting knowledge-based skills, crafting, and the number of trained skills for some classes."
+        },
+        {
+          "id": "wisdom",
+          "name": "Wisdom",
+          "content": "Wisdom measures perception and insight, affecting perception checks, survival checks, and will saves."
+        },
+        {
+          "id": "charisma",
+          "name": "Charisma",
+          "content": "Charisma measures force of personality, affecting diplomacy, intimidation, performance, and certain magical abilities."
+        }
+      ]
+    },
+    {
+      "id": "proficiency",
+      "name": "Proficiency",
+      "content": "In Pathfinder 2e, your proficiency in various abilities, skills, and equipment determines your aptitude. Proficiency comes in five ranks: untrained, trained, expert, master, and legendary.",
+      "subsections": [
+        {
+          "id": "proficiency_bonus",
+          "name": "Proficiency Bonus",
+          "content": "Your proficiency bonus is equal to your level plus a modifier based on your rank: untrained (0), trained (2), expert (4), master (6), or legendary (8)."
+        }
+      ]
+    },
+    {
+      "id": "actions",
+      "name": "Actions",
+      "content": "In Pathfinder 2e, activities during encounters are measured in actions. On your turn, you get 3 actions and 1 reaction to use as you see fit.",
+      "subsections": [
+        {
+          "id": "single_actions",
+          "name": "Single Actions",
+          "content": "Most common activities, such as making an attack, moving, raising a shield, or drawing a weapon, cost 1 action."
+        },
+        {
+          "id": "two_action_activities",
+          "name": "Two-Action Activities",
+          "content": "More complex activities, such as casting many spells or administering first aid, cost 2 actions."
+        },
+        {
+          "id": "three_action_activities",
+          "name": "Three-Action Activities",
+          "content": "Particularly powerful or complex activities, such as casting higher-level spells or using certain special abilities, cost 3 actions."
+        },
+        {
+          "id": "reactions",
+          "name": "Reactions",
+          "content": "Reactions are special actions that can be taken even when it's not your turn, in response to specific triggers. You get 1 reaction per round."
+        }
+      ]
+    },
+    {
+      "id": "combat",
+      "name": "Combat",
+      "content": "Combat in Pathfinder 2e takes place in encounters, with participants acting in initiative order. Each round, participants take turns using their actions and reactions.",
+      "subsections": [
+        {
+          "id": "initiative",
+          "name": "Initiative",
+          "content": "At the start of an encounter, all participants roll for initiative, usually using Perception. The order of initiative determines the order of turns during the encounter."
+        },
+        {
+          "id": "attacks",
+          "name": "Attacks",
+          "content": "Attacks in Pathfinder 2e use a multiple attack penalty. Your first attack on your turn has no penalty, your second attack has a -5 penalty, and your third attack has a -10 penalty."
+        },
+        {
+          "id": "critical_success",
+          "name": "Critical Success",
+          "content": "If you roll a natural 20 on an attack roll, or if your result exceeds the target's AC by 10 or more, you score a critical success, dealing double damage."
+        }
+      ]
+    }
+  ]
+}

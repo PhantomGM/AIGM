@@ -1,0 +1,87 @@
+{
+  "name": "D&D 5e Basic Rules",
+  "version": "1.0",
+  "sections": [
+    {
+      "id": "ability_scores",
+      "name": "Ability Scores",
+      "content": "Every character has six ability scores that represent their basic attributes: Strength, Dexterity, Constitution, Intelligence, Wisdom, and Charisma. These scores range from 3 to 18 for most characters, with 10-11 being the average for humans. Modifiers derived from ability scores range from -4 to +4 for most characters, with 0 being average.",
+      "subsections": [
+        {
+          "id": "strength",
+          "name": "Strength",
+          "content": "Strength measures physical power and affects melee attack rolls, damage rolls with melee weapons, athletics checks, and carrying capacity."
+        },
+        {
+          "id": "dexterity",
+          "name": "Dexterity",
+          "content": "Dexterity measures agility and affects armor class, initiative, ranged attack rolls, and dexterity saves."
+        },
+        {
+          "id": "constitution",
+          "name": "Constitution",
+          "content": "Constitution measures endurance and affects hit points, constitution saves, and concentration checks for spellcasters."
+        },
+        {
+          "id": "intelligence",
+          "name": "Intelligence",
+          "content": "Intelligence measures reasoning and memory, affecting knowledge-based skills and spellcasting for wizards."
+        },
+        {
+          "id": "wisdom",
+          "name": "Wisdom",
+          "content": "Wisdom measures perception and insight, affecting perception checks, insight checks, and spellcasting for clerics and druids."
+        },
+        {
+          "id": "charisma",
+          "name": "Charisma",
+          "content": "Charisma measures force of personality, affecting social interactions, persuasion checks, and spellcasting for bards, sorcerers, and warlocks."
+        }
+      ]
+    },
+    {
+      "id": "dice_rolls",
+      "name": "Dice Rolls",
+      "content": "Most actions in D&D 5e are resolved by rolling dice. The most common roll is the d20 roll, used for attack rolls, saving throws, and ability checks. To make a d20 roll, roll a 20-sided die and add any relevant modifiers.",
+      "subsections": [
+        {
+          "id": "advantage_disadvantage",
+          "name": "Advantage and Disadvantage",
+          "content": "When you have advantage on a roll, roll two d20s and take the higher result. When you have disadvantage, roll two d20s and take the lower result."
+        },
+        {
+          "id": "critical_hits",
+          "name": "Critical Hits",
+          "content": "When you roll a 20 on an attack roll, you score a critical hit, which means you roll twice as many damage dice."
+        }
+      ]
+    },
+    {
+      "id": "combat",
+      "name": "Combat",
+      "content": "Combat in D&D 5e takes place in rounds, each lasting approximately 6 seconds in game time. During a round, each participant takes a turn, acting in order of initiative.",
+      "subsections": [
+        {
+          "id": "initiative",
+          "name": "Initiative",
+          "content": "At the start of combat, everyone rolls initiative by making a Dexterity check. The order of initiative determines the order of turns during combat."
+        },
+        {
+          "id": "actions",
+          "name": "Actions",
+          "content": "On your turn, you can take one action, such as Attack, Cast a Spell, Dash, Disengage, Dodge, Help, Hide, Ready, Search, or Use an Object."
+        },
+        {
+          "id": "bonus_actions",
+          "name": "Bonus Actions",
+          "content": "Some abilities and spells allow you to take a bonus action on your turn, in addition to your regular action."
+        },
+        {
+          "id": "reactions",
+          "name": "Reactions",
+          "content": "Some abilities and spells allow you to take a reaction, which is an instant response to a trigger. You can take only one reaction per round."
+        }
+      ]
+    }
+  ]
+}
